@@ -168,7 +168,9 @@ class AlarmScheduler(private val context: Context) {
         Log.d(TAG, "Cancelling alarm $alarmId")
 
         // Cancel AlarmManager
-        val intent = Intent(context, AlarmReceiver::class.java)
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            action = ACTION_ALARM_TRIGGER
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             alarmId.hashCode(),
@@ -226,7 +228,9 @@ class AlarmScheduler(private val context: Context) {
      * @return true if scheduled, false otherwise
      */
     fun isAlarmScheduled(alarmId: String): Boolean {
-        val intent = Intent(context, AlarmReceiver::class.java)
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            action = ACTION_ALARM_TRIGGER
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             alarmId.hashCode(),

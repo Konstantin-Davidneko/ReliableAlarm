@@ -112,8 +112,22 @@ class NotificationHelper(private val context: Context) {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(pendingIntent)
+            .setFullScreenIntent(createTriggerIntent(alarmId), true)
             .setAutoCancel(false)
             .build()
+    }
+
+    private fun createTriggerIntent(alarmId: String): PendingIntent {
+        val intent = Intent(context, com.reliablealarm.app.ui.AlarmTriggerActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+            putExtra(com.reliablealarm.app.domain.AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+        }
+        return PendingIntent.getActivity(
+            context,
+            alarmId.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     /**

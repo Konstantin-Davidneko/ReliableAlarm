@@ -112,6 +112,10 @@ class AlarmEditActivity : AppCompatActivity() {
         val saved = alarmRepository.saveAlarm(alarm)
         // Update existingAlarm so config activities have the right ID
         existingAlarm = saved
+        // Re-register with AlarmManager so the new time actually fires
+        val scheduler = com.reliablealarm.app.domain.AlarmScheduler(this)
+        scheduler.cancelAlarm(saved.id)
+        scheduler.scheduleAlarm(saved)
         Toast.makeText(this, "Alarm Saved", Toast.LENGTH_SHORT).show()
         finish()
     }

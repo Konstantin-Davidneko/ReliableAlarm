@@ -70,7 +70,56 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadData()
+        requestAlarmPermissions()
     }
+
+    /**
+     * Requests the permissions without which alarms silently never fire.
+     * Each settings screen is opened at most once per app launch.
+     */
+    private fun requestAlarmPermissions() {
+        val alarmManager = getSystemService(android.app.AlarmManager::class.java)
+        val canExact = android.os.Build.VERSION.SDK_INT < 31 || alarmManager.canScheduleExactAlarms()
+
+        // Re-arm all enabled alarms in case they were saved before this fix
+        // or before the exact-alarm permission was granted
+        if (canExact) {
+            alarmRepository.getAllAlarms().filter { it.isEnabled }.forEach {
+                alarmScheduler.cancelAlarm(it.id)
+                alarmScheduler.scheduleAlarm(it)
+            }
+        }
+
+        if (permissionsPrompted) return
+        permissionsPrompted = true
+
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
+
+        if (!canExact) {
+            Toast.makeText(this, "Allow exact alarms for ReliableAlarm", Toast.LENGTH_LONG).show()
+            startActivity(
+                Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                    .setData(android.net.Uri.parse("package:$packageName"))
+            )
+            return
+        }
+
+        val notificationManager = getSystemService(android.app.NotificationManager::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= 34 && !notificationManager.canUseFullScreenIntent()) {
+            Toast.makeText(this, "Allow full-screen alarms for ReliableAlarm", Toast.LENGTH_LONG).show()
+            startActivity(
+                Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
+                    .setData(android.net.Uri.parse("package:$packageName"))
+            )
+        }
+    }
+
+    private var permissionsPrompted = false
 
 
     private fun initializeRepositories() {
