@@ -19,6 +19,9 @@ jobs:
       # gradlew is committed without the executable bit
       - run: chmod +x gradlew
 
+      # gradle.properties pins a Windows-only JDK path
+      - run: sed -i '/org.gradle.java.home/d' gradle.properties
+
       - run: ./gradlew assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
